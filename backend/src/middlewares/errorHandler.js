@@ -4,12 +4,14 @@
  * Catches all errors passed via next(error) and returns a consistent response
  */
 const { sendError } = require('../utils/response');
+const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
-  // Log error details (in production use Winston/Pino instead of console)
-  console.error(`[ERROR] ${req.method} ${req.url}:`, {
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  // Log error details using Winston
+  logger.error(`${req.method} ${req.url} - ${err.message}`, {
+    stack: err.stack,
+    body: req.body,
+    user: req.user ? req.user.id : 'unauthenticated',
   });
 
   // Mongoose validation errors

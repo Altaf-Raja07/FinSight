@@ -4,6 +4,7 @@
  */
 const mongoose = require('mongoose');
 const config = require('./env');
+const logger = require('../utils/logger');
 
 const connectDB = async () => {
   try {
@@ -11,22 +12,22 @@ const connectDB = async () => {
       // Mongoose 8+ has these defaults, but explicit for clarity
     });
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    logger.info(`✅ MongoDB Connected: ${conn.connection.host}`);
 
     // Graceful shutdown hooks
     process.on('SIGINT', async () => {
       await mongoose.connection.close();
-      console.log('MongoDB connection closed on SIGINT');
+      logger.info('MongoDB connection closed on SIGINT');
       process.exit(0);
     });
 
     process.on('SIGTERM', async () => {
       await mongoose.connection.close();
-      console.log('MongoDB connection closed on SIGTERM');
+      logger.info('MongoDB connection closed on SIGTERM');
       process.exit(0);
     });
   } catch (error) {
-    console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    logger.error(`❌ MongoDB Connection Error: ${error.message}`);
     process.exit(1); // Crash fast — supervisor/PM2 will restart
   }
 };

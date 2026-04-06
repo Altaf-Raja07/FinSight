@@ -7,18 +7,40 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+const compression = require('compression');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
 
 const routes = require('./src/routes/index');
 const errorHandler = require('./src/middlewares/errorHandler');
 const { apiLimiter } = require('./src/middlewares/rateLimiter');
 const { sendSuccess, sendError } = require('./src/utils/response');
 const cacheUtil = require('./src/utils/cache');
+const AppError = require('./src/utils/AppError');
 
 const app = express();
 
+// ─── Performance Middleware ───────────────────────────────────────────────────
+app.use(compression());
+
 // ─── Security Middleware ──────────────────────────────────────────────────────
-app.use(helmet());                          // Sets secure HTTP headers
-app.use(cors({ origin: '*' }));             // Configurable — restrict in production
+app.use(helmet());
+app.use(mongoSanitize()); // Prevent NoSQL injection
+app.use(xss()); // Prevent XSS attacks
+
+// CORS — allow the Next.js dev server and any configured production origin
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    credentials: true,
+  })
+);
 
 // ─── Request Parsing ──────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
@@ -55,11 +77,8 @@ app.get('/health', (req, res) => {
 app.use('/api/v1', routes);
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
-app.use((req, res) => {
-  return sendError(res, {
-    statusCode: 404,
-    message: `Route not found: ${req.method} ${req.url}`,
-  });
+app.use((req, res, next) => {
+  next(new AppError(`Route not found: ${req.method} ${req.url}`, 404));
 });
 
 // ─── Centralized Error Handler ────────────────────────────────────────────────
