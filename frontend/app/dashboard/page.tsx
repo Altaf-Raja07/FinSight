@@ -64,6 +64,7 @@ function DashboardContent() {
         user={user}
         onLogout={handleLogout}
         onMenuToggle={() => setIsMobileMenuOpen(true)}
+        onViewChange={setCurrentView}
       />
 
       <div className="flex">

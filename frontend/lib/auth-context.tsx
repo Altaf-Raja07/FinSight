@@ -30,7 +30,6 @@ const mapUser = (backendUser: any): User => ({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isHydrated, setIsHydrated] = useState(false);
 
   // Load user from server (via token) on mount
   useEffect(() => {
@@ -50,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
       } finally {
         setIsLoading(false);
-        setIsHydrated(true);
       }
     };
     initAuth();
@@ -119,16 +117,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     hasPermission,
   }), [user, isLoading, login, register, logout, hasPermission]);
-
-  if (!isHydrated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 mx-auto rounded-xl bg-primary/20 animate-pulse" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <AuthContext.Provider value={value}>
